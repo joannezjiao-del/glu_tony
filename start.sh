@@ -2,10 +2,7 @@
 set -euo pipefail
 
 PORT="${PORT:-18789}"
-#
-# OpenClaw 现在要求 gateway.bind 使用“bind modes”
-# 例如：loopback/lan/custom/tailnet/auto，而不是 0.0.0.0 这种 legacy host alias。
-#
+
 BIND_RAW="${OPENCLAW_BIND:-}"
 if [ -z "$BIND_RAW" ]; then
   BIND_MODE="lan"
@@ -25,9 +22,6 @@ STATE_DIR="${OPENCLAW_STATE_DIR:-$HOME/.openclaw}"
 : "${OPENCLAW_GATEWAY_TOKEN:?Missing OPENCLAW_GATEWAY_TOKEN}"
 : "${GEMINI_API_KEY:?Missing GEMINI_API_KEY}"
 
-# Control UI 的跨域来源白名单（origin 需要包含协议 https://...）
-# 如果你的 Railway 域名不是默认的那个，可以在 Railway Variables 里额外设置：
-# OPENCLAW_CONTROL_UI_ORIGIN=https://your-domain.up.railway.app
 CONTROL_UI_ORIGIN="${OPENCLAW_CONTROL_UI_ORIGIN:-https://glutony-production.up.railway.app}"
 HTTP_CONTROL_UI_ORIGIN="${CONTROL_UI_ORIGIN/https:\/\//http:\/\/}"
 
@@ -42,12 +36,20 @@ if [ ! -f "${STATE_DIR}/openclaw.json" ]; then
     --gateway-token-ref-env OPENCLAW_GATEWAY_TOKEN \
     --gateway-port "$PORT" \
     --gateway-bind "$BIND_MODE" \
-    --gateway-trusted-proxies '["*"]' \
     --skip-health \
     --skip-skills \
     --accept-risk
 fi
 
+echo "[openclaw] configuring Control UI allowedOrigins..."
+openclaw config set gateway.controlUi.allowedOrigins \
+  "[\"${HTTP_CONTROL_UI_ORIGIN}\",\"${CONTROL_UI_ORIGIN}\",\"http://127.0.0.1:${PORT}\",\"http://localhost:${PORT}\"]" \
+  --strict-json
+
+echo "[openclaw] configuring trusted proxies for Railway..."
+openclaw config set gateway.trustedProxies \
+  '["100.64.0.0/10","10.0.0.0/8","172.16.0.0/12","192.168.0.0/16"]' \
+  --strict-json
+
 echo "[openclaw] starting gateway (bind mode: ${BIND_MODE}) on port ${PORT}"
 exec openclaw gateway run --bind "$BIND_MODE" --port "$PORT" --verbose
-
