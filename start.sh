@@ -21,7 +21,6 @@
 
   : "${OPENCLAW_GATEWAY_TOKEN:?Missing OPENCLAW_GATEWAY_TOKEN}"
   : "${GEMINI_API_KEY:?Missing GEMINI_API_KEY}"
-  : "${OPENROUTER_API_KEY:?Missing OPENROUTER_API_KEY}"
 
   CONTROL_UI_ORIGIN="${OPENCLAW_CONTROL_UI_ORIGIN:-https://glutony-production.up.railway.app}"
   HTTP_CONTROL_UI_ORIGIN="${CONTROL_UI_ORIGIN/https:\/\//http:\/\/}"
@@ -52,13 +51,19 @@
     '["100.64.0.0/10","10.0.0.0/8","172.16.0.0/12","192.168.0.0/16"]' \
     --strict-json
 
-  echo "[openclaw] configuring OpenRouter as model provider..."
-  openclaw config set auth.profiles."openrouter:default".type "apiKey"
-  openclaw config set auth.profiles."openrouter:default".provider "openrouter"
-  openclaw config set auth.profiles."openrouter:default".apiKey "$OPENROUTER_API_KEY"
-  openclaw config set agents.defaults.model.primary "openrouter/anthropic/claude-3.5-sonnet"
-  openclaw config set agents.defaults.heartbeatModel.primary "openrouter/google/gemini-flash-1.5"
-  echo "[openclaw] OpenRouter configured (primary: claude-3.5-sonnet)"
+  # Configure OpenRouter if API key is available
+  OPENROUTER_KEY="${OPENROUTER_API_KEY:-}"
+  if [ -n "$OPENROUTER_KEY" ]; then
+    echo "[openclaw] configuring OpenRouter as model provider..."
+    openclaw config set auth.profiles."openrouter:default".type "apiKey" 2>/dev/null || true
+    openclaw config set auth.profiles."openrouter:default".provider "openrouter" 2>/dev/null || true
+    openclaw config set auth.profiles."openrouter:default".apiKey "$OPENROUTER_KEY" 2>/dev/null || true
+    openclaw config set agents.defaults.model.primary "openrouter/anthropic/claude-3.5-sonnet" 2>/dev/null || true
+    openclaw config set agents.defaults.heartbeatModel.primary "openrouter/google/gemini-flash-1.5" 2>/dev/null || true
+    echo "[openclaw] OpenRouter configured (primary: claude-3.5-sonnet)"
+  else
+    echo "[openclaw] OPENROUTER_API_KEY not set, skipping OpenRouter config"
+  fi
 
   # Install the self-improvement skill (pre-cloned in Docker image)
   SKILLS_DIR="${STATE_DIR}/skills"
