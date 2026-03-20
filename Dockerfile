@@ -7,6 +7,10 @@ RUN apt-get update \
 
 RUN npm install -g openclaw@latest
 
+# Pre-clone the self-improving-agent skill into the image
+RUN git clone --depth=1 https://github.com/peterskoett/self-improving-agent.git \
+  /app/skills/self-improving-agent
+
 WORKDIR /app
 
 COPY start.sh /app/start.sh
@@ -19,4 +23,3 @@ EXPOSE 18789
 
 # Run a long-lived foreground process (required by Railway).
 CMD ["/app/start.sh"]
-
