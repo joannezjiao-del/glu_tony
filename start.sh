@@ -53,6 +53,14 @@ openclaw config set gateway.controlUi.allowedOrigins \
   "[\"${HTTP_CONTROL_UI_ORIGIN}\",\"${CONTROL_UI_ORIGIN}\",\"http://127.0.0.1:${PORT}\",\"http://localhost:${PORT}\"]" \
   --strict-json
 
+echo "[openclaw] configuring trusted proxies..."
+# Trust proxy headers from all sources — safe inside Railway's private network.
+openclaw config set gateway.trustedProxies '["*"]' --strict-json
+
+echo "[openclaw] activating gateway auth token..."
+# Ensure the token is active so clients can authenticate without pairing.
+openclaw config set gateway.auth.token "$OPENCLAW_GATEWAY_TOKEN" --strict-json
+
 echo "[openclaw] starting gateway (bind mode: ${BIND_MODE}) on port ${PORT}"
 exec openclaw gateway run --bind "$BIND_MODE" --port "$PORT" --verbose
 
