@@ -51,6 +51,23 @@ openclaw config set gateway.trustedProxies \
   '["100.64.0.0/10","10.0.0.0/8","172.16.0.0/12","192.168.0.0/16"]' \
   --strict-json
 
+# Install the self-improving-agent skill from pre-cloned image files
+SKILLS_DIR="${STATE_DIR}/skills"
+SKILL_NAME="self-improving-agent"
+SKILL_SRC="/app/skills/${SKILL_NAME}"
+SKILL_DEST="${SKILLS_DIR}/${SKILL_NAME}"
+
+if [ -d "$SKILL_SRC" ]; then
+  mkdir -p "$SKILLS_DIR"
+  if [ ! -d "$SKILL_DEST" ]; then
+    echo "[openclaw] installing skill: ${SKILL_NAME}..."
+    cp -r "$SKILL_SRC" "$SKILL_DEST"
+    echo "[openclaw] skill installed: ${SKILL_NAME}"
+  else
+    echo "[openclaw] skill already present: ${SKILL_NAME}"
+  fi
+fi
+
 # Background loop: auto-approve any pending device pairing every 5 seconds
 auto_approve_loop() {
   echo "[openclaw-pairing] starting auto-approve loop..."
