@@ -51,18 +51,22 @@ openclaw config set gateway.trustedProxies \
   '["100.64.0.0/10","10.0.0.0/8","172.16.0.0/12","192.168.0.0/16"]' \
   --strict-json
 
-# Start gateway in background, wait for it, then print tokenized dashboard URL
-echo "[openclaw] starting gateway in background to retrieve dashboard URL..."
+# Start gateway in background
+echo "[openclaw] starting gateway in background..."
 openclaw gateway run --bind "$BIND_MODE" --port "$PORT" --verbose &
 GATEWAY_PID=$!
 
-echo "[openclaw] waiting for gateway to be ready..."
-sleep 8
+# Wait for gateway to be ready, then auto-approve any pending device pairing
+echo "[openclaw] waiting for gateway to initialise..."
+sleep 10
 
-echo "[openclaw] =========================================="
-echo "[openclaw] DASHBOARD URL (open this to skip pairing):"
+echo "[openclaw] approving any pending device pairing requests..."
+openclaw devices approve --latest 2>&1 || echo "[openclaw] no pending pairing requests (will be approved on first connect)"
+
+echo "[openclaw] printing tokenized dashboard URL..."
 openclaw dashboard --no-open 2>&1 || true
-echo "[openclaw] =========================================="
+
+echo "[openclaw] gateway is ready!"
 
 # Keep gateway running in foreground
 wait $GATEWAY_PID
