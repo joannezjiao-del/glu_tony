@@ -51,22 +51,15 @@ openclaw config set gateway.trustedProxies \
   '["100.64.0.0/10","10.0.0.0/8","172.16.0.0/12","192.168.0.0/16"]' \
   --strict-json
 
-# Start gateway in background
-echo "[openclaw] starting gateway in background..."
-openclaw gateway run --bind "$BIND_MODE" --port "$PORT" --verbose &
-GATEWAY_PID=$!
+# Background loop: auto-approve any pending device pairing every 5 seconds
+auto_approve_loop() {
+  echo "[openclaw-pairing] starting auto-approve loop..."
+  while true; do
+    sleep 5
+    openclaw devices approve --latest 2>/dev/null && echo "[openclaw-pairing] approved a pending device" || true
+  done
+}
+auto_approve_loop &
 
-# Wait for gateway to be ready, then auto-approve any pending device pairing
-echo "[openclaw] waiting for gateway to initialise..."
-sleep 10
-
-echo "[openclaw] approving any pending device pairing requests..."
-openclaw devices approve --latest 2>&1 || echo "[openclaw] no pending pairing requests (will be approved on first connect)"
-
-echo "[openclaw] printing tokenized dashboard URL..."
-openclaw dashboard --no-open 2>&1 || true
-
-echo "[openclaw] gateway is ready!"
-
-# Keep gateway running in foreground
-wait $GATEWAY_PID
+echo "[openclaw] starting gateway (bind mode: ${BIND_MODE}) on port ${PORT}"
+exec openclaw gateway run --bind "$BIND_MODE" --port "$PORT" --verbose
