@@ -51,5 +51,18 @@ openclaw config set gateway.trustedProxies \
   '["100.64.0.0/10","10.0.0.0/8","172.16.0.0/12","192.168.0.0/16"]' \
   --strict-json
 
-echo "[openclaw] starting gateway (bind mode: ${BIND_MODE}) on port ${PORT}"
-exec openclaw gateway run --bind "$BIND_MODE" --port "$PORT" --verbose
+# Start gateway in background, wait for it, then print tokenized dashboard URL
+echo "[openclaw] starting gateway in background to retrieve dashboard URL..."
+openclaw gateway run --bind "$BIND_MODE" --port "$PORT" --verbose &
+GATEWAY_PID=$!
+
+echo "[openclaw] waiting for gateway to be ready..."
+sleep 8
+
+echo "[openclaw] =========================================="
+echo "[openclaw] DASHBOARD URL (open this to skip pairing):"
+openclaw dashboard --no-open 2>&1 || true
+echo "[openclaw] =========================================="
+
+# Keep gateway running in foreground
+wait $GATEWAY_PID
