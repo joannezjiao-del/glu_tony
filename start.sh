@@ -59,7 +59,7 @@ openclaw config set gateway.trustedProxies '["*"]' --strict-json
 
 echo "[openclaw] activating gateway auth token..."
 # Ensure the token is active so clients can authenticate without pairing.
-openclaw config set gateway.auth.token "$OPENCLAW_GATEWAY_TOKEN" --strict-json
+openclaw config set gateway.auth.token "$OPENCLAW_GATEWAY_TOKEN"
 
 echo "[openclaw] starting gateway (bind mode: ${BIND_MODE}) on port ${PORT}"
 exec openclaw gateway run --bind "$BIND_MODE" --port "$PORT" --verbose
