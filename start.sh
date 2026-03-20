@@ -21,6 +21,7 @@
 
   : "${OPENCLAW_GATEWAY_TOKEN:?Missing OPENCLAW_GATEWAY_TOKEN}"
   : "${GEMINI_API_KEY:?Missing GEMINI_API_KEY}"
+  : "${OPENROUTER_API_KEY:?Missing OPENROUTER_API_KEY}"
 
   CONTROL_UI_ORIGIN="${OPENCLAW_CONTROL_UI_ORIGIN:-https://glutony-production.up.railway.app}"
   HTTP_CONTROL_UI_ORIGIN="${CONTROL_UI_ORIGIN/https:\/\//http:\/\/}"
@@ -51,8 +52,15 @@
     '["100.64.0.0/10","10.0.0.0/8","172.16.0.0/12","192.168.0.0/16"]' \
     --strict-json
 
+  echo "[openclaw] configuring OpenRouter as model provider..."
+  openclaw config set auth.profiles."openrouter:default".type "apiKey"
+  openclaw config set auth.profiles."openrouter:default".provider "openrouter"
+  openclaw config set auth.profiles."openrouter:default".apiKey "$OPENROUTER_API_KEY"
+  openclaw config set agents.defaults.model.primary "openrouter/anthropic/claude-3.5-sonnet"
+  openclaw config set agents.defaults.heartbeatModel.primary "openrouter/google/gemini-flash-1.5"
+  echo "[openclaw] OpenRouter configured (primary: claude-3.5-sonnet)"
+
   # Install the self-improvement skill (pre-cloned in Docker image)
-  # Skill name in SKILL.md is "self-improvement"
   SKILLS_DIR="${STATE_DIR}/skills"
   SKILL_DEST="${SKILLS_DIR}/self-improvement"
   SKILL_SRC="/app/skills/self-improving-agent"
@@ -61,13 +69,12 @@
     echo "[openclaw] installing skill: self-improvement..."
     mkdir -p "$SKILLS_DIR"
     cp -r "$SKILL_SRC" "$SKILL_DEST"
-    echo "[openclaw] skill files copied."
+    echo "[openclaw] skill installed."
   fi
 
   if [ -d "$SKILL_DEST" ]; then
-    echo "[openclaw] enabling skill: self-improvement..."
     openclaw config set skills.entries.self-improvement.enabled true 2>/dev/null || true
-    echo "[openclaw] skill self-improvement is enabled."
+    echo "[openclaw] skill self-improvement enabled."
   fi
 
   # Background loop: auto-approve any pending device pairing every 5 seconds
