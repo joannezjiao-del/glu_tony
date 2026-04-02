@@ -58,8 +58,8 @@
     openclaw config set auth.profiles."openrouter:default".type "apiKey" 2>/dev/null || true
     openclaw config set auth.profiles."openrouter:default".provider "openrouter" 2>/dev/null || true
     openclaw config set auth.profiles."openrouter:default".apiKey "$OPENROUTER_KEY" 2>/dev/null || true
-    openclaw config set agents.defaults.model.primary "openrouter/anthropic/claude-3.5-sonnet" 2>/dev/null || true
-    openclaw config set agents.defaults.heartbeatModel.primary "openrouter/google/gemini-flash-1.5" 2>/dev/null || true
+    openclaw config set agents.defaults.model.primary "openrouter/anthropic/claude-sonnet-4-5" 2>/dev/null || true
+    openclaw config set agents.defaults.heartbeatModel.primary "openrouter/google/gemini-2.5-flash" 2>/dev/null || true
     echo "[openclaw] OpenRouter configured (primary: claude-3.5-sonnet)"
   else
     echo "[openclaw] OPENROUTER_API_KEY not set, skipping OpenRouter config"
